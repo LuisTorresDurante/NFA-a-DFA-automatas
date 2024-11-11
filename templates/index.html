@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Convertidor de NFA a DFA</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold mb-6">Convertidor de NFA a DFA</h1>
+        
+        <div class="space-y-4">
+            <div>
+                <label class="block mb-2">Estados (separados por comas):</label>
+                <input type="text" id="states" class="w-full p-2 border rounded" placeholder="q0,q1,q2">
+            </div>
+            
+            <div>
+                <label class="block mb-2">Símbolos de Entrada (separados por comas):</label>
+                <input type="text" id="symbols" class="w-full p-2 border rounded" placeholder="0,1">
+            </div>
+            
+            <div>
+                <label class="block mb-2">Estado Inicial:</label>
+                <input type="text" id="initial" class="w-full p-2 border rounded" placeholder="q0">
+            </div>
+            
+            <div>
+                <label class="block mb-2">Estados Finales (separados por comas):</label>
+                <input type="text" id="final" class="w-full p-2 border rounded" placeholder="q1,q2">
+            </div>
+            
+            <div>
+                <label class="block mb-2">Transiciones:</label>
+                <div id="transitions" class="space-y-2">
+                    <div class="flex space-x-2">
+                        <input type="text" class="from-state w-1/3 p-2 border rounded" placeholder="Estado Origen">
+                        <input type="text" class="symbol w-1/3 p-2 border rounded" placeholder="Símbolo">
+                        <input type="text" class="to-state w-1/3 p-2 border rounded" placeholder="Estado(s) Destino">
+                        <button onclick="removeTransition(this)" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">×</button>
+                    </div>
+                </div>
+                <button onclick="addTransition()" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    Agregar Transición
+                </button>
+            </div>
+            
+            <button onclick="convertNFA()" class="w-full py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                Convertir a DFA
+            </button>
+        </div>
+
+        <div id="error-message" class="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded hidden"></div>
+        
+        <div id="result" class="mt-6 hidden">
+            <h2 class="text-xl font-bold mb-4">DFA Resultante:</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-2">Diagrama de Estados:</h3>
+                <img id="dfa-diagram" class="max-w-full h-auto border rounded" alt="Diagrama de Estados DFA">
+                <button onclick="downloadDiagram()" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    Descargar Diagrama
+                </button>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-semibold mb-2">Tabla de Transiciones:</h3>
+                <div class="overflow-x-auto">
+                    <table id="transition-table" class="min-w-full border-collapse border">
+                        <thead>
+                            <tr>
+                                <th class="border p-2 bg-gray-100">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        function validateInputs() {
+            const states = document.getElementById('states').value.trim();
+            const symbols = document.getElementById('symbols').value.trim();
+            const initial = document.getElementById('initial').value.trim();
+            const final = document.getElementById('final').value.trim();
+            
+            if (!states) {
+                showError('Por favor, ingrese al menos un estado');
+                return false;
+            }
+            if (!symbols) {
+                showError('Por favor, ingrese al menos un símbolo de entrada');
+                return false;
+            }
+            if (!initial) {
+                showError('Por favor, ingrese un estado inicial');
+                return false;
+            }
+            if (!final) {
+                showError('Por favor, ingrese al menos un estado final');
+                return false;
+            }
+            
+            const transitionRows = document.querySelectorAll('#transitions > div');
+            let hasValidTransition = false;
+            for (const row of transitionRows) {
+                const fromState = row.querySelector('.from-state').value.trim();
+                const symbol = row.querySelector('.symbol').value.trim();
+                const toState = row.querySelector('.to-state').value.trim();
+                
+                if (fromState || symbol || toState) {
+                    if (!fromState || !symbol || !toState) {
+                        showError('Por favor, complete todos los campos para cada transición');
+                        return false;
+                    }
+                    hasValidTransition = true;
+                }
+            }
+            
+            if (!hasValidTransition) {
+                showError('Por favor, agregue al menos una transición');
+                return false;
+            }
+            
+            return true;
+        }
+
+        function removeTransition(button) {
+            button.parentElement.remove();
+        }
+
+        function addTransition() {
+            const transitionsDiv = document.getElementById('transitions');
+            const newTransition = document.createElement('div');
+            newTransition.className = 'flex space-x-2';
+            newTransition.innerHTML = `
+                <input type="text" class="from-state w-1/3 p-2 border rounded" placeholder="Estado Origen">
+                <input type="text" class="symbol w-1/3 p-2 border rounded" placeholder="Símbolo">
+                <input type="text" class="to-state w-1/3 p-2 border rounded" placeholder="Estado(s) Destino">
+                <button onclick="removeTransition(this)" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600">×</button>
+            `;
+            transitionsDiv.appendChild(newTransition);
+        }
+
+        function hexToBytes(hex) {
+            const bytes = new Uint8Array(hex.length / 2);
+            for (let i = 0; i < hex.length; i += 2) {
+                bytes[i/2] = parseInt(hex.substr(i, 2), 16);
+            }
+            return bytes;
+        }
+
+        function downloadDiagram() {
+            const img = document.getElementById('dfa-diagram');
+            const a = document.createElement('a');
+            a.href = img.src;
+            a.download = 'diagrama_dfa.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function createTransitionTable(tableData) {
+            const table = document.getElementById('transition-table');
+            const thead = table.querySelector('thead tr');
+            const tbody = table.querySelector('tbody');
+            
+            thead.innerHTML = '<th class="border p-2 bg-gray-100">Estado</th>';
+            tbody.innerHTML = '';
+            
+            tableData.headers.forEach(symbol => {
+                thead.innerHTML += `<th class="border p-2 bg-gray-100">${symbol}</th>`;
+            });
+            
+            tableData.rows.forEach(row => {
+                const tr = document.createElement('tr');
+                
+                let stateText = row.state;
+                if (row.is_initial) stateText = '→' + stateText;
+                if (row.is_final) stateText = stateText + '*';
+                
+                tr.innerHTML = `<td class="border p-2 font-semibold">${stateText}</td>`;
+                
+                row.transitions.forEach(transition => {
+                    tr.innerHTML += `<td class="border p-2">${transition}</td>`;
+                });
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        function convertNFA() {
+            if (!validateInputs()) {
+                return;
+            }
+
+            document.getElementById('error-message').classList.add('hidden');
+            
+            const transitions = {};
+            document.querySelectorAll('#transitions > div').forEach(div => {
+                const fromState = div.querySelector('.from-state').value.trim();
+                const symbol = div.querySelector('.symbol').value.trim();
+                const toState = div.querySelector('.to-state').value.trim();
+                
+                if (fromState && symbol && toState) {
+                    if (!transitions[fromState]) {
+                        transitions[fromState] = {};
+                    }
+                    if (!transitions[fromState][symbol]) {
+                        transitions[fromState][symbol] = [];
+                    }
+                    const toStates = toState.split(',').map(s => s.trim());
+                    transitions[fromState][symbol] = toStates;
+                }
+            });
+
+            const data = {
+                states: document.getElementById('states').value.split(',').map(s => s.trim()),
+                input_symbols: document.getElementById('symbols').value.split(',').map(s => s.trim()),
+                transitions: transitions,
+                initial_state: document.getElementById('initial').value.trim(),
+                final_states: document.getElementById('final').value.split(',').map(s => s.trim())
+            };
+
+            fetch('/convert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    document.getElementById('result').classList.remove('hidden');
+                    
+                    const bytes = hexToBytes(result.image);
+                    const blob = new Blob([bytes], { type: 'image/png' });
+                    const url = URL.createObjectURL(blob);
+                    document.getElementById('dfa-diagram').src = url;
+                    
+                    createTransitionTable(result.table);
+                } else {
+                    showError('Error: ' + result.error);
+                }
+            })
+            .catch(error => {
+                showError('Error: ' + error.message);
+            });
+        }
+    </script>
+</body>
+</html>
