@@ -30,8 +30,8 @@ Esta aplicación web permite convertir Autómatas Finitos No Deterministas (NFA)
 
 1. Clonar el repositorio:
 ```bash
-git clone https://github.com/TU_USUARIO/nfa-dfa-converter.git
-cd nfa-dfa-converter
+git clone https://github.com/LuisTorresDurante/NFA-a-DFA-automatas
+cd NFA-a-DFA-automatas
 ```
 
 2. Crear y activar un entorno virtual:
@@ -45,7 +45,7 @@ source venv/bin/activate
 
 3. Instalar dependencias:
 ```bash
-pip install -r requirements.txt
+pip install -r flask 'automata-lib[visual]' graphviz
 ```
 
 4. Ejecutar la aplicación:
@@ -97,38 +97,3 @@ nfa-dfa-converter/
 ├── requirements.txt    # Dependencias del proyecto
 └── README.md          # Documentación
 ```
-
-## Convenciones de Código
-- Indentación usando 4 espacios
-- Nombres de variables y funciones en español
-- Comentarios descriptivos en español
-- Seguimiento de PEP 8 para código Python
-
-## Contribución
-1. Hacer fork del repositorio
-2. Crear una rama para la nueva funcionalidad (`git checkout -b feature/nueva-funcionalidad`)
-3. Hacer commit de los cambios (`git commit -am 'Agregar nueva funcionalidad'`)
-4. Hacer push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Crear un Pull Request
-
-## Solución de Problemas Comunes
-
-### Error: "No se puede conectar al servidor"
-- Verificar que el servidor Flask esté ejecutándose
-- Comprobar que el puerto 5000 no esté en uso
-
-### Error: "Transición inválida"
-- Asegurarse de que todos los estados mencionados estén en la lista de estados
-- Verificar que los símbolos de entrada sean válidos
-
-## Licencia
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## Contacto
-- Crear un issue en el repositorio
-- Enviar un correo a [tu-email@ejemplo.com]
-
-## Agradecimientos
-- Biblioteca automata-lib por proporcionar las funcionalidades base
-- Comunidad de Flask por la documentación y soporte
-- Contribuidores del proyecto
